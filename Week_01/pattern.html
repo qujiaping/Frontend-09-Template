@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .cell {
+            height: 100px;
+            width: 100px;
+            background-color: aqua;
+            line-height: 100px;
+            display: inline-block;
+            vertical-align: middle;
+            border: solid 1px white;
+            font-size: 50px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <ul id="board" style="width: 306px;"></ul>
+    <script>
+        let sts = 1
+        let pattern = [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+        ]
+        function show() {
+            board.innerHTML = ''
+            for (i = 0; i < 3; i++) {
+                for (j = 0; j < 3; j++) {
+                    let cell = document.createElement('li')
+                    cell.a = `${i}${j}`
+                    cell.classList.add('cell')
+                    cell.innerText = pattern[i][j] === 0 ? '' : pattern[i][j] === 1 ? '⭕' : '❌'
+                    board.appendChild(cell)
+                }
+            }
+        }
+        let board = document.getElementById('board')
+        board.addEventListener('click', (e) => {
+            pattern[e.target.a[0]][e.target.a[1]] = sts
+
+            
+            if (check(pattern, sts)) {
+                alert(sts === 1 ? '你赢了' : '你输了')
+            } else {
+                let result = willWin(pattern, 3 - sts)
+                if (result) {
+                    alert(result + '快赢了')
+                }
+            }
+            sts = 3 - sts
+            
+            show()
+            computerMove(pattern, sts)
+        })
+        show()
+        function clon(arr) {
+            return JSON.parse(JSON.stringify(arr))
+        }
+        function computerMove () {
+            let best = bestChose(pattern, sts)
+            if(best.position) {
+                pattern[best.position[0]][best.position[1]] = sts
+            }
+            sts = 3 -sts
+            show()
+        }
+        function check(pattern, sts) {
+            for (let i = 0; i < 3; i++) {
+                let win = true
+                for (let j = 0; j < 3; j++) {
+                    if (pattern[i][j] !== sts) {
+                        win = false
+                    }
+                }
+                if (win) {
+                    return true
+                }
+            }
+
+            for (let i = 0; i < 3; i++) {
+                let win = true
+                for (let j = 0; j < 3; j++) {
+                    if (pattern[j][i] !== sts) {
+                        win = false
+                    }
+                }
+                if (win) {
+                    return true
+                }
+            }
+            {
+                let win = true
+                for (let i = 0; i < 3; i++) {
+
+                    if (pattern[i][i] !== sts) {
+                        win = false
+                    }
+                }
+                if (win) {
+                    return true
+                }
+            }
+
+            {
+                let win = true
+                for (let i = 0; i < 3; i++) {
+
+                    if (pattern[i][2 - i] !== sts) {
+                        win = false
+                    }
+                }
+                if (win) {
+                    return true
+                }
+            }
+
+
+
+        }
+        function willWin(pattern, sts) {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (pattern[i][j]) {
+                        continue
+                    }
+                    let tmp = clon(pattern)
+                    tmp[i][j] = sts
+                    if (check(tmp, sts)) {
+                        return [i, j]
+                    }
+                }
+            }
+            return null
+        }
+        function bestChose(pattern, sts) {
+            let p
+            if (p = willWin(pattern, sts)) {
+                return {
+                    position: p,
+                    result: 1
+                }
+            }
+            let result = -2
+            let position = null
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (pattern[i][j]) {
+                        continue
+                    }
+                    let tmp = clon(pattern)
+                    tmp[i][j] = sts
+                    let r = bestChose(tmp, 3-sts).result
+                    if(-r > result) {
+                        result = -r
+                        position = [i ,j]
+                    }
+                    
+                }
+            }
+            return {
+                result: position ? result : 0,
+                position
+            }
+        }
+    </script>
+</body>
+
+</html>
