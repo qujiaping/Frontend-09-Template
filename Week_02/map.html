@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .cell {
+            box-sizing: border-box;
+            background-color: grey;
+            height: 10px;
+            width: 10px;
+            border: honeydew solid 1px;
+        }
+
+        #plat {
+            display: inline-flex;
+            flex-wrap: wrap;
+            width: 1000px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plat">
+    </div>
+    <button>save</button>
+    <script>
+        class sort {
+            constructor(data, compare) {
+                this.data = data.slice()
+                this.compare = compare || ((a, b) => a - b)
+            }
+            take() {
+                if (this.data.length === 0) return
+                let minVal = this.data[0]
+                let minIndex = 0
+
+                for (let i = 1; i < this.data.length; i++) {
+                    if (this.compare(this.data[i], minVal) < 0) {
+                        minVal = this.data[i]
+                        minIndex = i
+                    }
+                }
+                this.data[minIndex] = this.data[this.data.length - 1]
+                this.data.pop()
+                return minVal
+            }
+            give(v) {
+                this.data.push(v)
+            }
+        }
+
+
+        let downSts = false
+        let clear = false
+        let map = window.localStorage.getItem('map') ? JSON.parse(window.localStorage.getItem('map')) : Array(10000).fill(0)
+        function show() {
+            for (let i = 0; i < 100; i++) {
+                for (let j = 0; j < 100; j++) {
+                    let cell = document.createElement('div')
+                    cell.x = j
+                    cell.y = i
+                    cell.classList.add('cell')
+                    if (map[i * 100 + j] === 1) {
+                        cell.style.backgroundColor = 'black'
+                    }
+                    plat.appendChild(cell)
+                }
+            }
+        }
+
+
+
+        function sleep(time) {
+            return new Promise(function (resolve) {
+                setTimeout(resolve, time);
+            })
+        }
+
+        async function path(start, end, map) {
+
+
+            function distance(a) {
+                return (end[0] - a[0]) ** 2 + (end[1] - a[1]) ** 2
+            }
+            let queue = new sort([start], ((a, b) => distance(a) - distance(b)))
+            let table = [...map]
+            async function insert(x, y, pre) {
+                if (x < 0 || x >= 100 || y < 0 || y >= 100) return;
+                if (table[y * 100 + x]) return;
+
+
+                plat.children[y * 100 + x].style.backgroundColor = 'red'
+                queue.give([x, y])
+                table[y * 100 + x] = pre
+            }
+
+            while (queue.data.length) {
+                let [x, y] = queue.take()
+
+                if (x === end[0] && y === end[1]) {
+                    let p = []
+                    while (x !== start[0] || y !== start[1]) {
+                        p.push(map[y * 100 + x]);
+                        [x, y] = table[y * 100 + x]
+                        await sleep(30)
+                        plat.children[y * 100 + x].style.backgroundColor = 'purple'
+                    }
+                    return p
+                }
+                await insert(x - 1, y, [x, y])
+                await insert(x + 1, y, [x, y])
+                await insert(x, y - 1, [x, y])
+                await insert(x, y + 1, [x, y])
+
+                await insert(x - 1, y - 1, [x, y])
+                await insert(x + 1, y - 1, [x, y])
+                await insert(x - 1, y + 1, [x, y])
+                await insert(x + 1, y + 1, [x, y])
+
+            }
+            return null
+        }
+
+
+
+
+
+        document.getElementsByTagName('button')[0].addEventListener('click', e => {
+            window.localStorage.setItem('map', JSON.stringify(map))
+        })
+        plat.addEventListener('click', e => {
+            let x = e.target.x
+            let y = e.target.y
+            map[y * 100 + x] = 1
+            e.target.style.backgroundColor = 'black'
+        })
+        plat.addEventListener('mouseup', e => {
+            downSts = false
+        })
+        plat.addEventListener('mousedown', e => {
+            downSts = true
+            clear = e.which === 3
+        })
+        plat.addEventListener('contextmenu', e => {
+            e.preventDefault()
+            let x = e.target.x
+            let y = e.target.y
+            map[y * 100 + x] = 0
+            e.target.style.backgroundColor = ''
+        })
+        plat.addEventListener('click', e => {
+            let x = e.target.x
+            let y = e.target.y
+            map[y * 100 + x] = 1
+            e.target.style.backgroundColor = 'black'
+        })
+        plat.addEventListener('mousemove', e => {
+            if (downSts) {
+                if (clear) {
+                    let x = e.target.x
+                    let y = e.target.y
+                    map[y * 100 + x] = 0
+                    e.target.style.backgroundColor = ''
+                } else {
+                    let x = e.target.x
+                    let y = e.target.y
+                    map[y * 100 + x] = 1
+                    e.target.style.backgroundColor = 'black'
+                }
+            }
+        })
+        show()
+    </script>
+</body>
+
+</html>
